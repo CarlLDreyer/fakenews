@@ -25,11 +25,16 @@ export default {
   ** Global CSS
   */
   css: [
+    '@/assets/styling/_base.scss',
+    'animate.css/animate.css',
   ],
   /*
   ** Plugins to load before mounting the App
   */
   plugins: [
+    { src: '~/plugins/vue-confetti.js', mode: 'client' },
+    { src: '~/plugins/vue-gtag.js', mode: 'client' },
+    { src: '~/plugins/vue-lazyload', mode: 'client' },
   ],
   /*
   ** Nuxt.js dev-modules

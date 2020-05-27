@@ -1,21 +1,47 @@
 <template>
   <div class="quiz">
-    <span class="question">Question {{ question + 1 }} of {{ totalQuestions }}</span>
-    <div class="fakenews">
-      <img v-if="currentQuestion.type === 'image'" :src="currentQuestion.url" :alt="currentQuestion.type" />
-      <video v-else controls autoplay>
-        <source :src="currentQuestion.url" type="video/mp4" />
-      </video>
-    </div>
-    <div class="buttons">
-      <span @click="handleAnswer('fakeNews')" :class="yesObject">Yes, it's fake news! ✌️</span>
-      <span @click="handleAnswer('notFakeNews')" :class="noObject">No, it's not! 👎</span>
-      <button v-if="answered && !finished" @click="handleNext">{{ !finished ? 'Next news' : 'Finish'}}</button>
-    </div>
+    <template v-if="answered">
+      <div class="wrapper">
+        <div class="content">
+          <span class="question">Question {{ questionIndex + 1 }} of {{ totalQuestions }}</span>
+          <span class="answer" :class="[answerObject]">{{ answer }}</span>
+          <span class="desc">{{ currentQuestion.answer === 'fakeNews' ? wasFakeNews : wasntFakeNews }}</span>
+          <ResultBar :results="fakeData" />
+          <button @click="handleNext">{{ finished ? 'How did I do?' : 'Next Question' }}</button>
+        </div>
+      </div>
+    </template>
+    <template v-else-if="finished">
+      <div class="wrapper">
+        <div class="content">
+          <img src="/Trophy.svg" alt="trophy">
+          <span class="congrats">Congratulations!</span>
+          <span class="small">You scored</span>
+          <span class="score">11/20</span>
+          <!-- <span class="score">{{ correctAnswers }}/{{ totalQuestions }}</span> -->
+          <span class="desc">That's better than 85% of the players</span>
+          <div class="buttons">
+            <button class="share">Statistics</button>
+            <button class="share">Share</button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else>
+      <QuestionLoader
+        :question="currentQuestion"
+        :totalQuestions="totalQuestions"
+        :questionNumber="questionIndex + 1"
+        @questionAnswered="handleAnswer($event)"
+      >
+      </QuestionLoader>
+    </template>
   </div>
 </template>
 
 <script>
+import QuestionLoader from '@/components/QuestionLoader'
+import ResultBar from '@/components/ResultBar'
 export default {
   name: 'Quiz',
   props: {
@@ -24,65 +50,88 @@ export default {
       required: true,
     },
   },
-  data () {
-    return {
-      question: 0,
-      currentQuestion: {},
-      answered: false,
-      selected: null,
-      previousAnswers: [],
-      finished: false,
-    }
-  },
   methods: {
+    loadCurrentQuestion () {
+      this.currentQuestion = this.questions[this.questionIndex]
+    },
     handleAnswer (answer) {
-      if (this.answered) return
-      this.selected = answer
       this.answered = true
-      if (this.currentQuestion.answer === answer) {
-        console.log('correct')
-      }
-      else {
-        console.log('not correct')
-      }
-      this.previousAnswers.push({answer: answer})
+      if (answer === this.currentQuestion.answer) this.answer = 'Correct'
+      else if (answer === 'timesUp') this.answer = 'Times Up!'
+      else this.answer = 'Incorrect'
+      this.previousAnswers.push({ answer: this.answer })
+      this.$gtag.event('questionAnswered', {
+        'event_category': 'question',
+        'event_label': this.questionIndex + 1,
+        'value': answer,
+      })
+      
+      if (this.questionIndex + 1 === this.totalQuestions) this.finished = true
     },
     handleNext () {
-      if (this.finished) return
       this.answered = false
-      this.selected = null
-      this.question++
+      this.answer = null
+      this.questionIndex++
+      if (this.finished) {
+        this.$confetti.start({
+          defaultDropRate: 15,
+          defaultSize: 8,
+          particlesPerFrame: 0.75,
+          particles: [
+            { type: 'circle' },
+            { type: 'rect' },
+          ]
+        })
+        this.$gtag.event('quizAnswered', {
+          'event_category': 'quiz',
+          'event_label': 'done',
+          'value': this.correctAnswers,
+        })
+      }
     },
   },
   watch: {
-    questions: {
+    questionIndex: {
       immediate: true,
-      handler () {
-        this.currentQuestion = this.questions[this.question]
+      handler (index) {
+        this.loadCurrentQuestion()
       }
     },
-    question (number) {
-      console.log('fuck', number)
-      if (this.totalQuestions !== number) this.currentQuestion = this.questions[number]
-      else this.finished = true
+  },
+  data () {
+    return {
+      questionIndex: 0,
+      currentQuestion: {},
+      answer: null,
+      previousAnswers: [],
+      answered: false,
+      finished: false,
+      fakeData: {
+        positive: 75,
+        negative: 25,
+      },
+      wasFakeNews: 'It was fake news, here\'s how everyone else has answered',
+      wasntFakeNews: 'It wasn\'t fake news, here\'s how everyone else has answered',
     }
   },
   computed: {
     totalQuestions () {
       return this.questions.length
     },
-    yesObject () {
+    answerObject () {
       return {
-        selected: this.selected === 'fakeNews',
-        answered: this.answered && this.selected === 'notFakeNews'
+        correct: this.answer === 'Correct',
+        incorrect: this.answer === 'Incorrect',
+        timesUp: this.answer === 'Times Up!',
       }
     },
-    noObject () {
-      return {
-        selected: this.selected === 'notFakeNews',
-        answered: this.answered && this.selected === 'fakeNews'
-      }
+    correctAnswers () {
+      return this.previousAnswers.filter(a => a.answer === 'Correct').length
     },
+  },
+  components: {
+    ResultBar,
+    QuestionLoader,
   },
 }
 </script>
@@ -92,59 +141,133 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
-  margin-top: 36px;
-  .question {
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .fakenews {
-    height: 60vh;
-    margin-bottom: 24px;
-    border: 1px solid #ccc;
-    img, video{
-      object-fit: cover;
-      border: none;
-      height: 100%;
-      width: 100%;
-    }
-  }
-  .buttons {
+  color: #333;
+  .wrapper {
     display: flex;
-    flex-direction: column;
-    span {
-      background: #F3F3F3;
-      cursor: pointer;
-      padding: 16px;
-      border-radius: 4px;
-      font-weight: 600;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    background: white;
+    height: 100%;
+    top: 0;
+    right: 0;
+    left: 0;
+    .content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: relative;
+      padding: 0 8px;
       transition: all .2s ease;
-      &:hover {
-        box-shadow: 0 0 0 2px #333;
+
+      @media (max-width: 768px) {
+        width: 100%;
       }
-      &:first-child {
-        margin-bottom: 8px;
+    }
+    .question {
+      color: grey;
+      font-weight: 600;
+      animation: fadeInDown;
+      animation-duration: 1s;
+    }
+    img {
+      animation: bounceInDown;
+      animation-duration: 1s;
+      margin-bottom: 24px;
+    }
+    .congrats {
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 8px;
+      animation: bounceIn;
+      animation-duration: 1s;
+      opacity: 0;
+      animation-delay: 1s;
+      animation-fill-mode: forwards;
+
+      @media (max-width: 768px) {
+        font-size: 32px;
       }
-      &.selected {
-        cursor: auto;
-        box-shadow: 0 0 0 2px #333;
+    }
+    .answer {
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 8px;
+      animation: zoomIn;
+      animation-duration: 1s;
+      &.correct {
+        color: #A6FCC4;
       }
-      &.answered {
-        cursor: auto;
-        &:hover {
-          box-shadow: none;
-        }
+      &.incorrect {
+        color: #FCA6A6;
+      }
+      &.timesUp {
+        color: #CAB7FF;
+      }
+
+      @media (max-width: 768px) {
+        font-size: 44px;
+      }
+    }
+    .score {
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 8px;
+      animation: fadeIn;
+      animation-duration: 1s;
+      opacity: 0;
+      animation-delay: 1s;
+      animation-fill-mode: forwards;
+    }
+    .small {
+      color: #8a8a8a;
+      font-weight: 600;
+      font-size: 16px;
+      animation: fadeIn;
+      animation-duration: 1s;
+      opacity: 0;
+      animation-delay: 1s;
+      animation-fill-mode: forwards;
+    }
+    .desc {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 16px;
+      animation: fadeIn;
+      animation-duration: 1s;
+      animation-delay: 1s;
+      opacity: 0;
+      animation-fill-mode: forwards;
+
+      @media (max-width: 768px) {
+        font-size: 12px;
       }
     }
     button {
-      display: block;
-      align-self: flex-end;
+      position: absolute;
+      bottom: -124px;
       outline: 0;
-      padding: 12px 24px;
-      font-weight: 600;
+      background: #E9ECF0;
+      padding: 12px 36px;
+      font-weight: 700;
       border-radius: 4px;
-      margin-top: 8px;
-      background: #DBCFFE;
+      transition: all .1s ease;
+      animation: fadeInUp;
+      animation-duration: 1s;
+      animation-delay: 1.5s;
+      opacity: 0;
+      animation-fill-mode: forwards;
+      &.share {
+       position: relative;
+       bottom: auto;
+      }
+      &:hover {
+        background: #D7D7D7;
+      }
     }
   }
 }

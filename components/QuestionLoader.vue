@@ -60,7 +60,7 @@ export default {
   width: 100%;
   position: relative;
   animation: fadeIn;
-  animation-duration: 1s;
+  animation-duration: .5s;
   .question {
     font-weight: 600;
     margin-bottom: 8px;
@@ -72,10 +72,14 @@ export default {
     overflow: hidden;
     border: 1px solid #ccc;
     margin-bottom: 8px;
-    img, video {
+    animation: fadeIn;
+    animation-duration: .5s;
+
+    img {
       border: none;
-      height: 100%;
       width: 100%;
+      height: calc(100vw / 1.875);
+      max-height: 480px;
     }
   }
   .footer {

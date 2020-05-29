@@ -52,7 +52,7 @@ export default {
     animation-duration: 1s;
 
     @media (max-width: 768px) {
-      font-size: 32px;
+      font-size: 28px;
     }
   }
   button {

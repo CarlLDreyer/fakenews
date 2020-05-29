@@ -47,8 +47,16 @@ export default {
         dataLabels: {
           enabled: false,
         },
+        states: {
+          hover: {
+            filter: {
+              type: 'lighten',
+              value: 0.05,
+            },
+          },
+        },
         tooltip: {
-          enalbed: true,
+          enabled: true,
           x: {
             show: true,
             formatter: (x) => {
@@ -60,9 +68,9 @@ export default {
           xaxis: [
             {
               x: this.userAnswers,
-              borderColor: '#CAB7FF',
+              borderColor: '#cab7ff',
               label: {
-                borderColor: '#CAB7FF',
+                borderColor: '#cab7ff',
                 orientation: 'horizontal',
                 text: 'You'
               }

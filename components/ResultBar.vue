@@ -5,13 +5,13 @@
         <span class="animated-bar"></span>
         <span class="label-inside">{{ results.positive || 50 }}%</span>
         <span class="line"></span>
-        <span class="label-outside">Yes, it's fake news! ✌️</span>
+        <span class="label-outside">Credible news! ✌️</span>
       </span>
       <span class="area negative" :style="{ width: `${ results.negative }%` }">
         <span class="animated-bar"></span>
         <span class="label-inside">{{ results.negative || 50 }}%</span>
         <span class="line"></span>
-        <span class="label-outside">No, it's not! 👎</span>
+        <span class="label-outside">Fake news! 👎</span>
       </span>
     </span>
   </div>

@@ -96,8 +96,8 @@ export default {
         let fakeNewsPercentage = ((fakeNews / total) * 100).toFixed()
         let notFakeNewsPercentage = ((notFakeNews / total) * 100).toFixed()
         let newData = {
-          positive: fakeNewsPercentage,
-          negative: notFakeNewsPercentage
+          positive: notFakeNewsPercentage,
+          negative: fakeNewsPercentage,
         }
         this.currentStats = newData
       })

@@ -7,8 +7,8 @@
     <div class="footer">
       <span class="loader"><span class="filled"></span></span>
       <span class="buttons">
-        <button @click="handleAnswer('fakeNews')">Yes, it's fake news! ✌️</button>
-        <button @click="handleAnswer('notFakeNews')">No, it's not! 👎</button>
+        <button @click="handleAnswer('fakeNews')">Fake news! 👎</button>
+        <button @click="handleAnswer('notFakeNews')">Credible news! ✌️</button>
       </span>
     </div>
   </div>

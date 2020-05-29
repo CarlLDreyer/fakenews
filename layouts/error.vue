@@ -1,44 +1,85 @@
 <template>
-  <v-app dark>
-    <h1 v-if="error.statusCode === 404">
-      {{ pageNotFound }}
-    </h1>
-    <h1 v-else>
-      {{ otherError }}
-    </h1>
-    <NuxtLink to="/">
-      Home page
-    </NuxtLink>
-  </v-app>
+  <v-layout
+    justify-center
+    align-center
+  >
+    <h1>{{ textTopFirst }}</h1>
+    <h1>{{ textTopSecond }}</h1>
+    <h2>{{ textMiddle }}</h2>
+    <h2>{{ textBottom }}</h2>
+    <button @click="handleRoute">Latest project</button>
+  </v-layout>
 </template>
 
 <script>
 export default {
-  layout: 'empty',
-  props: {
-    error: {
-      type: Object,
-      default: null
-    }
-  },
+  name: 'Index',
   data () {
     return {
-      pageNotFound: '404 Not Found',
-      otherError: 'An error occurred'
+      textTopFirst: '404',
+      textTopSecond: 'Page not found',
+      textMiddle: 'I got my best people looking for it! 🕵️‍♂️🕵️‍♀️',
+      textBottom: 'Meanwhile check out my latest project.',
     }
   },
-  head () {
-    const title =
-      this.error.statusCode === 404 ? this.pageNotFound : this.otherError
-    return {
-      title
-    }
-  }
+  methods: {
+    handleRoute () {
+      this.$router.push('/fakenews')
+    },
+  },
 }
 </script>
 
 <style scoped>
 h1 {
   font-size: 20px;
+}
+</style>
+
+<style lang="scss" scoped>
+.layout {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  color: #333;
+  text-align: center;
+  h2 {
+    font-size: 16px;
+    animation: fadeIn;
+    animation-duration: 1s;
+
+    @media (max-width: 768px) {
+      font-size: 12px;
+    }
+  }
+  h1 {
+    margin-bottom: 16px;
+    font-size: 32px;
+    line-height: 1;
+    animation: fadeIn;
+    animation-duration: 1s;
+    &:first-child {
+      font-size: 54px;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 32px;
+    }
+  }
+  button {
+    background: #E9ECF0;
+    padding: 12px 36px;
+    font-weight: 700;
+    border-radius: 4px;
+    outline: 0;
+    margin-top: 24px;
+    transition: all .1s ease;
+    animation: fadeInUp;
+    animation-duration: 1s;
+    &:hover {
+      background: #D7D7D7;
+    }
+  }
 }
 </style>

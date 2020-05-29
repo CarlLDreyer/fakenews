@@ -2,10 +2,7 @@
   <div class="question-loader ">
     <span class="question">Question {{ questionNumber }} of {{ totalQuestions }}</span>
     <div class="content-loader">
-      <img v-if="question.type === 'image'" v-lazy="question.url" />
-      <video v-else controls autoplay>
-        <source :src="question.url" type="video/mp4" />
-      </video>
+      <img v-lazy="question.url" />
     </div>
     <div class="footer">
       <span class="loader"><span class="filled"></span></span>
@@ -45,16 +42,16 @@ export default {
       this.$emit('questionAnswered', answer)
     }
   },
-  // watch: {
-  //   question: {
-  //     immediate: true,
-  //     handler () {
-  //       setTimeout(() => {
-  //         if (!this.answered) this.$emit('questionAnswered', 'timesUp')
-  //       }, 10000)
-  //     },
-  //   },
-  // },
+  watch: {
+    question: {
+      immediate: true,
+      handler () {
+        setTimeout(() => {
+          if (!this.answered) this.$emit('questionAnswered', 'timesUp')
+        }, 10000)
+      },
+    },
+  },
 }
 </script>
 

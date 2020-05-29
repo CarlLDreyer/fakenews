@@ -7,10 +7,10 @@
       <Quiz :questions="questions" />
     </template>
     <template v-if="!hasStarted">
-      <h2>{{ one }}</h2>
-      <h1>{{ two }}</h1>
+      <h2>{{ textTop }}</h2>
+      <h1>{{ textMiddle }}</h1>
       <button @click="handlePlay">Let's find out</button>
-      <p>{{ three }}</p>
+      <p>{{ textBottom }}</p>
     </template>
   </v-layout>
 </template>
@@ -23,35 +23,49 @@ export default {
   name: 'FakeNews',
   data () {
     return {
-      one: '86% have fallen for fake news at least once*',
-      two: 'Are you one of them?',
-      three: '* according to the CIGI-Ipsos Global Survey.',
-      // questions: [
-      //   {
-      //     url: '/fakenews/ImageTwo.png',
-      //     type: 'image',
-      //     answer: 'notFakeNews',
-      //   }, {
-      //     url: '/fakenews/ImageOne.png',
-      //     type: 'image',
-      //     answer: 'fakeNews',
-      //   },{
-      //     url: '/fakenews/VideoOne.mp4',
-      //     type: 'video',
-      //     answer: 'fakeNews',
-      //   }, {
-      //     url: '/fakenews/ImageFour.png',
-      //     type: 'image',
-      //     answer: 'fakeNews',
-      //   }
-      // ],
+      textTop: '86% have fallen for fake news at least once*',
+      textMiddle: 'Are you one of them?',
+      textBottom: '* according to the CIGI-Ipsos Global Survey.',
       questions: [
         {
           url: '/fakenews/ImageTwo.png',
-          type: 'image',
           answer: 'notFakeNews',
-        }
+        }, {
+          url: '/fakenews/ImageOne.png',
+          answer: 'fakeNews',
+        }, {
+          url: '/fakenews/ImageSeven.png',
+          answer: 'notFakeNews',
+        }, {
+          url: '/fakenews/ImageEight.png',
+          answer: 'notFakeNews',
+        }, {
+          url: '/fakenews/ImageThree.png',
+          answer: 'fakeNews',
+        }, {
+          url: '/fakenews/ImageNine.png',
+          answer: 'notFakeNews',
+        }, {
+          url: '/fakenews/ImageFour.png',
+          answer: 'fakeNews',
+        }, {
+          url: '/fakenews/ImageFive.png',
+          answer: 'fakeNews',
+        }, {
+          url: '/fakenews/ImageSix.png',
+          answer: 'fakeNews',
+        }, {
+          url: '/fakenews/ImageTen.png',
+          answer: 'notFakeNews',
+        },
       ],
+      // questions: [
+      //   {
+      //     url: '/fakenews/ImageEight.png',
+      //     type: 'image',
+      //     answer: 'notFakeNews',
+      //   }
+      // ],
     }
   },
   methods: {
@@ -84,6 +98,7 @@ export default {
     font-size: 16px;
     animation: fadeIn;
     animation-duration: 1s;
+
     @media (max-width: 768px) {
       font-size: 12px;
     }
@@ -94,6 +109,7 @@ export default {
     line-height: 1;
     animation: fadeIn;
     animation-duration: 1s;
+
     @media (max-width: 768px) {
       font-size: 32px;
     }
@@ -109,6 +125,7 @@ export default {
     animation-delay: 1s;
     animation-fill-mode: forwards;
     opacity: 0;
+
     @media (max-width: 768px) {
       font-size: 10px;
     }

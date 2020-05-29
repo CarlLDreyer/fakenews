@@ -6,7 +6,7 @@
           <span class="question">Question {{ questionIndex + 1 }} of {{ totalQuestions }}</span>
           <span class="answer" :class="[answerObject]">{{ answer }}</span>
           <span class="desc">{{ currentQuestion.answer === 'fakeNews' ? wasFakeNews : wasntFakeNews }}</span>
-          <ResultBar :results="fakeData" />
+          <ResultBar :results="currentStats" />
           <button @click="handleNext">{{ finished ? 'How did I do?' : 'Next Question' }}</button>
         </div>
       </div>
@@ -14,15 +14,20 @@
     <template v-else-if="finished">
       <div class="wrapper">
         <div class="content">
-          <img src="/Trophy.svg" alt="trophy">
+          <transition name="slide-up-out">
+            <img v-if="!showMoreTrigger" src="/Trophy.svg" alt="trophy">
+          </transition>
           <span class="congrats">Congratulations!</span>
-          <span class="small">You scored</span>
-          <span class="score">11/20</span>
-          <!-- <span class="score">{{ correctAnswers }}/{{ totalQuestions }}</span> -->
-          <span class="desc">That's better than 85% of the players</span>
+          <div class="anim-wrapper">
+            <span class="small">You scored</span>
+            <span class="score">{{ correctAnswers }}/{{ totalQuestions }}</span>
+            <span class="desc-better">That's better than {{ betterThanPercentage }}% of the players</span>
+          </div>
+          <transition name="slide-up-in">
+            <StatisticsBar v-if="showMoreStats" :statistics="finishedStats" :userAnswers="correctAnswers" />
+          </transition>
           <div class="buttons">
-            <button class="share">Statistics</button>
-            <button class="share">Share</button>
+            <button v-if="!showMoreTrigger" class="share" @click="handleStatsClick">Statistics</button>
           </div>
         </div>
       </div>
@@ -42,15 +47,13 @@
 <script>
 import QuestionLoader from '@/components/QuestionLoader'
 import ResultBar from '@/components/ResultBar'
+import StatisticsBar from '@/components/StatisticsBar'
 export default {
   name: 'Quiz',
-  props: {
-    questions: {
-      type: Array,
-      required: true,
-    },
-  },
   methods: {
+    handleStatsClick () {
+      this.showMoreTrigger = !this.showMoreTrigger
+    },
     loadCurrentQuestion () {
       this.currentQuestion = this.questions[this.questionIndex]
     },
@@ -60,18 +63,56 @@ export default {
       else if (answer === 'timesUp') this.answer = 'Times Up!'
       else this.answer = 'Incorrect'
       this.previousAnswers.push({ answer: this.answer })
-      this.$gtag.event('questionAnswered', {
-        'event_category': 'question',
-        'event_label': this.questionIndex + 1,
-        'value': answer,
-      })
-      
+      let nextIndex = this.questionIndex + 1 === this.totalQuestions ? this.totalQuestions : this.questionIndex + 1
+      if (answer !== 'timesUp') this.logQuestionEvent(nextIndex, answer)
       if (this.questionIndex + 1 === this.totalQuestions) this.finished = true
+    },
+    logQuestionEvent (questionNumber, userAnswer) {
+      this.$axios.$post('https://us-central1-fakenews-2f6d3.cloudfunctions.net/app/regEvent', {
+        event: {
+          type: 'questionEvent',
+          questionNumber: questionNumber,
+          userAnswer: userAnswer,
+        }
+      })
+    },
+    logCompletedEvent (correctAnswers) {
+      this.$axios.$post('https://us-central1-fakenews-2f6d3.cloudfunctions.net/app/regEvent', {
+        event: {
+          type: 'completedEvent',
+          correctAnswers: correctAnswers,
+        }
+      })
+    },
+    async fetchCurrentStatistics () {
+      let questionNumber = this.questionIndex + 1
+      this.$axios.$get('https://us-central1-fakenews-2f6d3.cloudfunctions.net/app/qStats', {
+        params: {
+          questionNumber: questionNumber
+        },
+      }).then(response => {
+        let { fakeNews, notFakeNews } = response
+        let total = fakeNews + notFakeNews
+        let fakeNewsPercentage = ((fakeNews / total) * 100).toFixed()
+        let notFakeNewsPercentage = ((notFakeNews / total) * 100).toFixed()
+        let newData = {
+          positive: fakeNewsPercentage,
+          negative: notFakeNewsPercentage
+        }
+        this.currentStats = newData
+      })
+      .catch(error => {
+        console.error('Error fetching statistics', error)
+      })
+    },
+    async fetchFinishedStats () {
+      const data = await this.$axios.$get('https://us-central1-fakenews-2f6d3.cloudfunctions.net/app/aStats')
+      this.finishedStats = data
     },
     handleNext () {
       this.answered = false
       this.answer = null
-      this.questionIndex++
+      if (this.questionIndex + 1 !== this.totalQuestions) this.questionIndex++
       if (this.finished) {
         this.$confetti.start({
           defaultDropRate: 15,
@@ -82,21 +123,26 @@ export default {
             { type: 'rect' },
           ]
         })
-        this.$gtag.event('quizAnswered', {
-          'event_category': 'quiz',
-          'event_label': 'done',
-          'value': this.correctAnswers,
-        })
+        this.logCompletedEvent(this.correctAnswers)
       }
     },
+  },
+  mounted () {
+    this.fetchFinishedStats()
   },
   watch: {
     questionIndex: {
       immediate: true,
       handler (index) {
         this.loadCurrentQuestion()
-      }
+        this.fetchCurrentStatistics()
+      },
     },
+    showMoreTrigger () {
+      setTimeout(() => {
+        this.showMoreStats = true
+      }, 400)
+    }
   },
   data () {
     return {
@@ -106,13 +152,19 @@ export default {
       previousAnswers: [],
       answered: false,
       finished: false,
-      fakeData: {
-        positive: 75,
-        negative: 25,
-      },
+      currentStats: {},
+      finishedStats: [],
+      showMoreStats: false,
+      showMoreTrigger: false,
       wasFakeNews: 'It was fake news, here\'s how everyone else has answered',
       wasntFakeNews: 'It wasn\'t fake news, here\'s how everyone else has answered',
     }
+  },
+  props: {
+    questions: {
+      type: Array,
+      required: true,
+    },
   },
   computed: {
     totalQuestions () {
@@ -128,10 +180,21 @@ export default {
     correctAnswers () {
       return this.previousAnswers.filter(a => a.answer === 'Correct').length
     },
+    betterThanPercentage () {
+      const total = this.finishedStats.find(e => e.hasOwnProperty('totalAnswers'))
+      const { totalAnswers } = total
+      let previous = 0
+      for (let i = 0; i < this.correctAnswers; i++) {
+        let prevPercentile = this.finishedStats.find(e => e.correctAnswers === i)
+        previous += prevPercentile.amount
+      }
+      return ((previous / totalAnswers) * 100).toFixed()
+    },
   },
   components: {
     ResultBar,
     QuestionLoader,
+    StatisticsBar,
   },
 }
 </script>
@@ -159,32 +222,42 @@ export default {
       flex-direction: column;
       position: relative;
       padding: 0 8px;
-      transition: all .2s ease;
+      min-width: 500px;
 
       @media (max-width: 768px) {
         width: 100%;
+        min-width: auto;
       }
+    }
+    .anim-wrapper {
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn;
+      animation-duration: 1s;
+      opacity: 0;
+      animation-delay: .75s;
+      animation-fill-mode: forwards;
     }
     .question {
       color: grey;
       font-weight: 600;
       animation: fadeInDown;
-      animation-duration: 1s;
+      animation-duration: .5s;
     }
     img {
       animation: bounceInDown;
       animation-duration: 1s;
-      margin-bottom: 24px;
     }
     .congrats {
       font-size: 44px;
       font-weight: 700;
       line-height: 1;
       margin-bottom: 8px;
+      margin-top: 24px;
       animation: bounceIn;
       animation-duration: 1s;
       opacity: 0;
-      animation-delay: 1s;
+      animation-delay: .5s;
       animation-fill-mode: forwards;
 
       @media (max-width: 768px) {
@@ -197,7 +270,7 @@ export default {
       line-height: 1;
       margin-bottom: 8px;
       animation: zoomIn;
-      animation-duration: 1s;
+      animation-duration: .75s;
       &.correct {
         color: #A6FCC4;
       }
@@ -217,31 +290,30 @@ export default {
       font-weight: 600;
       line-height: 1;
       margin-bottom: 8px;
-      animation: fadeIn;
-      animation-duration: 1s;
-      opacity: 0;
-      animation-delay: 1s;
-      animation-fill-mode: forwards;
     }
     .small {
       color: #8a8a8a;
       font-weight: 600;
       font-size: 16px;
-      animation: fadeIn;
-      animation-duration: 1s;
-      opacity: 0;
-      animation-delay: 1s;
-      animation-fill-mode: forwards;
     }
     .desc {
       font-weight: 600;
       font-size: 18px;
       margin-bottom: 16px;
       animation: fadeIn;
-      animation-duration: 1s;
-      animation-delay: 1s;
+      animation-duration: .75s;
+      animation-delay: .25s;
       opacity: 0;
       animation-fill-mode: forwards;
+
+      @media (max-width: 768px) {
+        font-size: 12px;
+      }
+    }
+    .desc-better {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 16px;
 
       @media (max-width: 768px) {
         font-size: 12px;
@@ -270,5 +342,21 @@ export default {
       }
     }
   }
+}
+.slide-up-in-enter-active, .slide-up-in-leave-active {
+  transition: all 1s;
+  max-height: 500px;
+}
+.slide-up-in-enter, .slide-up-in-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+.slide-up-out-leave-active {
+  transition: all .5s ease;
+  max-height: 250px;
+}
+.slide-up-out-leave-to {
+  max-height: 0;
+  opacity: 0;
 }
 </style>

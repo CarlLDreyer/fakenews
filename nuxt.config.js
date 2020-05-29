@@ -1,4 +1,4 @@
-import colors from 'vuetify/es5/util/colors'
+// import colors from 'vuetify/es5/util/colors'
 
 export default {
   mode: 'spa',
@@ -6,7 +6,7 @@ export default {
   ** Headers of the page
   */
   head: {
-    titleTemplate: '%s - ' + process.env.npm_package_name,
+    titleTemplate: 'CarlLDreyer - ' + process.env.npm_package_name,
     title: process.env.npm_package_name || '',
     meta: [
       { charset: 'utf-8' },
@@ -14,7 +14,7 @@ export default {
       { hid: 'description', name: 'description', content: process.env.npm_package_description || '' }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      { rel: 'icon', type: 'image/x-icon', href: '/favi.png' }
     ]
   },
   /*
@@ -33,8 +33,8 @@ export default {
   */
   plugins: [
     { src: '~/plugins/vue-confetti.js', mode: 'client' },
-    { src: '~/plugins/vue-gtag.js', mode: 'client' },
     { src: '~/plugins/vue-lazyload', mode: 'client' },
+    { src: '~/plugins/vue-apexcharts', mode: 'client' },
   ],
   /*
   ** Nuxt.js dev-modules
@@ -46,6 +46,7 @@ export default {
   ** Nuxt.js modules
   */
   modules: [
+    '@nuxtjs/axios',
   ],
   /*
   ** vuetify module configuration
@@ -53,19 +54,19 @@ export default {
   */
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
-    theme: {
-      themes: {
-        dark: {
-          primary: colors.blue.darken2,
-          accent: colors.grey.darken3,
-          secondary: colors.amber.darken3,
-          info: colors.teal.lighten1,
-          warning: colors.amber.base,
-          error: colors.deepOrange.accent4,
-          success: colors.green.accent3
-        }
-      }
-    }
+    // theme: {
+    //   themes: {
+    //     dark: {
+    //       primary: colors.blue.darken2,
+    //       accent: colors.grey.darken3,
+    //       secondary: colors.amber.darken3,
+    //       info: colors.teal.lighten1,
+    //       warning: colors.amber.base,
+    //       error: colors.deepOrange.accent4,
+    //       success: colors.green.accent3
+    //     }
+    //   }
+    // }
   },
   /*
   ** Build configuration
